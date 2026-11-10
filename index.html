@@ -18,7 +18,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <select id="sheetSelect" onchange="loadData()" class="border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium">
-                    <!-- รายชื่อแท็บจะถูกโหลดมาแสดงตรงนี้อัติโนมัติ -->
+                    <option>กำลังโหลด...</option>
                 </select>
                 <button onclick="openCreateModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition shadow-sm">
                     + เพิ่มวันใหม่
@@ -53,15 +53,13 @@
                     </tr>
                 </thead>
                 <tbody id="dataTable" class="divide-y divide-gray-100 text-sm">
-                    <tr>
-                        <td colspan="4" class="p-6 text-center text-gray-400">กำลังโหลดข้อมูล...</td>
-                    </tr>
+                    <tr><td colspan="4" class="p-6 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Modal: เพิ่มข้อมูลรายการน้ำมัน -->
+    <!-- Modal: บันทึกข้อมูล (รองรับการถ่ายรูปสด) -->
     <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-gray-800 mb-4">📝 บันทึกข้อมูลการใช้น้ำมัน</h3>
@@ -75,13 +73,14 @@
                     <input type="number" id="inputAmount" placeholder="เช่น 2" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">ลิงก์รูปภาพหลักฐาน (หรือ URL รูปสลิป)</label>
-                    <input type="text" id="inputProof" placeholder="วางลิงก์รูปภาพหลักฐานที่นี่" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">หลักฐาน (ถ่ายรูปจากมือถือ/กล้อง หรือเลือกรูป)</label>
+                    <!-- capture="environment" จะบังคับเปิดกล้องหลังมือถือทันทีเมื่อกด -->
+                    <input type="file" id="inputImageFile" accept="image/*" capture="environment" class="w-full border rounded-xl px-3 py-2 text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
                 <button onclick="closeAddModal()" class="px-4 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-xl">ยกเลิก</button>
-                <button onclick="submitAddData()" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 font-medium">บันทึก</button>
+                <button onclick="submitAddData()" id="submitBtn" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 font-medium">บันทึก</button>
             </div>
         </div>
     </div>
@@ -100,11 +99,9 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbylvm2GVSoqFhz40aYvZXbzKf4A3ZJBNrDyrtcGOcuDX0rADy9uRU0W5yUgZ274Bzvfmg/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypOsII4mqdUibqJyV87ly3cS0_OGSmDPQYC8LzwbER22MJKIJfpcqcmZ7p7jdwIYNKOA/exec";
 
-        window.onload = function() {
-            initSheets();
-        };
+        window.onload = function() { initSheets(); };
 
         function initSheets() {
             fetch(WEB_APP_URL + "?action=getSheets")
@@ -119,6 +116,8 @@
                     select.appendChild(opt);
                 });
                 loadData();
+            }).catch(err => {
+                alert("ไม่สามารถเชื่อมต่อกับ Script ได้ กรุณาตรวจสอบ URL หรือสิทธิ์การ Deploy");
             });
         }
 
@@ -129,13 +128,13 @@
             fetch(WEB_APP_URL + "?sheet=" + encodeURIComponent(currentSheet))
             .then(res => res.json())
             .then(data => {
-                document.getElementById('totalAmountDisplay').textContent = data.total;
-                document.getElementById('totalCountDisplay').textContent = data.items.length;
+                document.getElementById('totalAmountDisplay').textContent = data.total || 0;
+                document.getElementById('totalCountDisplay').textContent = data.items ? data.items.length : 0;
 
                 let tbody = document.getElementById('dataTable');
                 tbody.innerHTML = '';
 
-                if (data.items.length === 0) {
+                if (!data.items || data.items.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400">ยังไม่มีข้อมูลในวันนี้</td></tr>`;
                     return;
                 }
@@ -158,13 +157,11 @@
             });
         }
 
-        // Modal Controls
         function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
         function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
         function openCreateModal() { document.getElementById('createModal').classList.remove('hidden'); }
         function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
 
-        // Actions
         function submitNewSheet() {
             let dateVal = document.getElementById('newDateInput').value;
             if (!dateVal) return alert('กรุณากรอกวันที่');
@@ -189,13 +186,39 @@
             let currentSheet = document.getElementById('sheetSelect').value;
             let name = document.getElementById('inputName').value;
             let amount = document.getElementById('inputAmount').value;
-            let proof = document.getElementById('inputProof').value;
+            let fileInput = document.getElementById('inputImageFile');
 
             if (!name || !amount) return alert('กรุณากรอกชื่อและจำนวนให้ครบถ้วน');
 
+            let submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = "กำลังบันทึก...";
+            submitBtn.disabled = true;
+
+            if (fileInput.files.length > 0) {
+                let file = fileInput.files[0];
+                let reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    let base64Data = reader.result.split(',')[1];
+                    sendDataToServer(currentSheet, name, amount, base64Data, file.type, file.name);
+                };
+            } else {
+                sendDataToServer(currentSheet, name, amount, "", "", "");
+            }
+        }
+
+        function sendDataToServer(sheet, name, amount, imgData, imgType, imgName) {
             fetch(WEB_APP_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'addData', sheet: currentSheet, name: name, amount: amount, proof: proof })
+                body: JSON.stringify({ 
+                    action: 'addData', 
+                    sheet: sheet, 
+                    name: name, 
+                    amount: amount, 
+                    imgData: imgData, 
+                    imgType: imgType, 
+                    imgName: imgName 
+                })
             })
             .then(res => res.json())
             .then(data => {
@@ -203,9 +226,14 @@
                     closeAddModal();
                     document.getElementById('inputName').value = '';
                     document.getElementById('inputAmount').value = '';
-                    document.getElementById('inputProof').value = '';
+                    document.getElementById('inputImageFile').value = '';
                     loadData();
+                } else {
+                    alert("เกิดข้อผิดพลาดในการบันทึก");
                 }
+                let submitBtn = document.getElementById('submitBtn');
+                submitBtn.textContent = "บันทึก";
+                submitBtn.disabled = false;
             });
         }
 
@@ -219,9 +247,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') {
-                    loadData();
-                }
+                if (data.status === 'success') { loadData(); }
             });
         }
     </script>
