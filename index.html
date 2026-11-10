@@ -89,7 +89,7 @@
     <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-2xl w-full max-w-xs shadow-xl">
             <h3 class="text-lg font-bold text-gray-800 mb-2">📅 เพิ่มวันที่ใช้งานใหม่</h3>
-            <input type="text" id="newDateInput" placeholder="DD/MM/YY" class="w-full border rounded-xl px-3 py-2 text-sm mb-4 outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="text" id="newDateInput" placeholder="" class="w-full border rounded-xl px-3 py-2 text-sm mb-4 outline-none focus:ring-2 focus:ring-emerald-500">
             <div class="flex justify-end gap-2">
                 <button onclick="closeCreateModal()" class="px-3 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-xl">ยกเลิก</button>
                 <button onclick="submitNewSheet()" class="px-3 py-2 bg-emerald-600 text-white text-sm rounded-xl hover:bg-emerald-700 font-medium">สร้างแท็บ</button>
@@ -103,7 +103,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxMFhWRuudyy4ukT5Pjuw_j20PRqwbW8TQB8I6Y1sfdLOOOYyskDnKeqeM6bt4N4dxeBA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz7OFiA1nHLmabLSqDPXLiqUxjjYF1JU76BzgZdO9s145GVUzPLSeQ2HNJsbcWwPYj6DQ/exec";
 
         window.onload = function() { initSheets(); };
 
@@ -113,10 +113,14 @@
             .then(sheets => {
                 let select = document.getElementById('sheetSelect');
                 select.innerHTML = '';
-                sheets.forEach(sheet => {
+                sheets.forEach((sheet, index) => {
                     let opt = document.createElement('option');
                     opt.value = sheet;
                     opt.textContent = sheet;
+                    // ถ้าเป็นตัวแรก (ซึ่งคือวันที่ล่าสุดที่ถูกจัดเรียงไว้) ให้เลือกเป็นค่าเริ่มต้น
+                    if (index === 0) {
+                        opt.selected = true;
+                    }
                     select.appendChild(opt);
                 });
                 loadData();
@@ -200,7 +204,7 @@
             .then(data => {
                 if (data.status === 'success') {
                     alert('สร้างแท็บสำเร็จ!');
-                    location.reload(); // รีเฟรชหน้าเว็บ
+                    location.reload(); // รีเฟรชหน้าเว็บอัตโนมัติ
                 } else {
                     alert(data.message);
                 }
@@ -249,7 +253,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    location.reload(); // รีเฟรชหน้าเว็บ 1 ครั้งอัตโนมัติเพื่อให้ข้อมูลตรงกันเป๊ะ
+                    location.reload(); // รีเฟรชหน้าเว็บอัตโนมัติเพื่อให้ข้อมูลตรงกัน
                 } else {
                     alert("เกิดข้อผิดพลาดในการบันทึก");
                     let submitBtn = document.getElementById('submitBtn');
@@ -270,7 +274,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') { 
-                    location.reload(); // รีเฟรชหน้าเว็บ 1 ครั้งหลังลบข้อมูลเสร็จ
+                    location.reload(); // รีเฟรชหน้าเว็บอัตโนมัติหลังลบ
                 }
             });
         }
