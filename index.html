@@ -32,7 +32,7 @@
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border">
-                <p class="text-xs text-gray-500 font-medium">ยอดรวมน้ำมัน (กระเป๋า)</p>
+                <p class="text-xs text-gray-500 font-medium">ยอดรวมน้ำมัน (การเป๋า)</p>
                 <h3 id="totalAmountDisplay" class="text-3xl font-bold text-blue-600 mt-1">0</h3>
             </div>
             <div class="bg-white p-5 rounded-2xl shadow-sm border">
@@ -59,27 +59,28 @@
         </div>
     </div>
 
-    <!-- Modal: บันทึกข้อมูล -->
+    <!-- Modal: เพิ่ม/แก้ไขข้อมูล -->
     <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">📝 บันทึกข้อมูลการใช้น้ำมัน</h3>
+            <h3 id="modalTitle" class="text-lg font-bold text-gray-800 mb-4">📝 บันทึกข้อมูลการใช้น้ำมัน</h3>
+            <input type="hidden" id="editRowId" value="">
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">ชื่อ</label>
-                    <input type="text" id="inputName" placeholder="เช่น ออม" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="inputName" placeholder="" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">จำนวน (ลิตร)</label>
-                    <input type="number" id="inputAmount" placeholder="เช่น 2" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">จำนวน (กระเป๋า)</label>
+                    <input type="number" id="inputAmount" placeholder="" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">ถ่ายรูปหลักฐาน (เปิดกล้องถ่ายสด)</label>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ถ่ายรูปหลักฐานใหม่ (ถ้าต้องการเปลี่ยน)</label>
                     <input type="file" id="inputImageFile" accept="image/*" capture="environment" class="w-full border rounded-xl px-3 py-2 text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
                 <button onclick="closeAddModal()" class="px-4 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-xl">ยกเลิก</button>
-                <button onclick="submitAddData()" id="submitBtn" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 font-medium">บันทึก</button>
+                <button onclick="submitData()" id="submitBtn" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 font-medium">บันทึก</button>
             </div>
         </div>
     </div>
@@ -88,7 +89,7 @@
     <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-2xl w-full max-w-xs shadow-xl">
             <h3 class="text-lg font-bold text-gray-800 mb-2">📅 เพิ่มวันที่ใช้งานใหม่</h3>
-            <input type="text" id="newDateInput" placeholder="เช่น 15/11/69" class="w-full border rounded-xl px-3 py-2 text-sm mb-4 outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="text" id="newDateInput" placeholder="DD/MM/YY" class="w-full border rounded-xl px-3 py-2 text-sm mb-4 outline-none focus:ring-2 focus:ring-emerald-500">
             <div class="flex justify-end gap-2">
                 <button onclick="closeCreateModal()" class="px-3 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-xl">ยกเลิก</button>
                 <button onclick="submitNewSheet()" class="px-3 py-2 bg-emerald-600 text-white text-sm rounded-xl hover:bg-emerald-700 font-medium">สร้างแท็บ</button>
@@ -102,7 +103,7 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxhqaWlCY7ovxq-vCwZE0kFmLHpzRiDIrfZDaGawQO7j2V2UpvzwxQVbkXRkXI_sVZk_A/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxMFhWRuudyy4ukT5Pjuw_j20PRqwbW8TQB8I6Y1sfdLOOOYyskDnKeqeM6bt4N4dxeBA/exec";
 
         window.onload = function() { initSheets(); };
 
@@ -150,6 +151,7 @@
                         <td class="p-4 text-gray-800">${item.amount}</td>
                         <td class="p-4">${proofHtml}</td>
                         <td class="p-4 text-center space-x-2">
+                            <button onclick="openEditModal(${item.rowId}, '${item.name}', '${item.amount}')" class="text-blue-500 hover:text-blue-700 text-xs font-medium">แก้ไข</button>
                             <button onclick="deleteRow(${item.rowId})" class="text-red-500 hover:text-red-700 text-xs font-medium">ลบ</button>
                         </td>
                     `;
@@ -158,7 +160,24 @@
             });
         }
 
-        function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = "📝 บันทึกข้อมูลการใช้น้ำมัน";
+            document.getElementById('editRowId').value = "";
+            document.getElementById('inputName').value = "";
+            document.getElementById('inputAmount').value = "";
+            document.getElementById('inputImageFile').value = "";
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        function openEditModal(rowId, name, amount) {
+            document.getElementById('modalTitle').textContent = "✏️ แก้ไขข้อมูลการใช้น้ำมัน";
+            document.getElementById('editRowId').value = rowId;
+            document.getElementById('inputName').value = name;
+            document.getElementById('inputAmount').value = amount;
+            document.getElementById('inputImageFile').value = "";
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
         function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
         function openCreateModal() { document.getElementById('createModal').classList.remove('hidden'); }
         function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
@@ -167,9 +186,7 @@
             document.getElementById('fullImage').src = src;
             document.getElementById('imageModal').classList.remove('hidden');
         }
-        function closeImageModal() {
-            document.getElementById('imageModal').classList.add('hidden');
-        }
+        function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); }
 
         function submitNewSheet() {
             let dateVal = document.getElementById('newDateInput').value;
@@ -183,16 +200,16 @@
             .then(data => {
                 if (data.status === 'success') {
                     alert('สร้างแท็บสำเร็จ!');
-                    closeCreateModal();
-                    initSheets();
+                    location.reload(); // รีเฟรชหน้าเว็บ
                 } else {
                     alert(data.message);
                 }
             });
         }
 
-        function submitAddData() {
+        function submitData() {
             let currentSheet = document.getElementById('sheetSelect').value;
+            let editRowId = document.getElementById('editRowId').value;
             let name = document.getElementById('inputName').value;
             let amount = document.getElementById('inputAmount').value;
             let fileInput = document.getElementById('inputImageFile');
@@ -203,25 +220,27 @@
             submitBtn.textContent = "กำลังบันทึก...";
             submitBtn.disabled = true;
 
+            let actionType = editRowId ? 'updateData' : 'addData';
+
             if (fileInput.files.length > 0) {
                 let file = fileInput.files[0];
                 let reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = function () {
-                    let imgBase64 = reader.result;
-                    sendDataToServer(currentSheet, name, amount, imgBase64);
+                    sendToServer(actionType, currentSheet, editRowId, name, amount, reader.result);
                 };
             } else {
-                sendDataToServer(currentSheet, name, amount, "");
+                sendToServer(actionType, currentSheet, editRowId, name, amount, "");
             }
         }
 
-        function sendDataToServer(sheet, name, amount, imgBase64) {
+        function sendToServer(action, sheet, rowId, name, amount, imgBase64) {
             fetch(WEB_APP_URL, {
                 method: 'POST',
                 body: JSON.stringify({ 
-                    action: 'addData', 
+                    action: action, 
                     sheet: sheet, 
+                    rowId: rowId,
                     name: name, 
                     amount: amount, 
                     imgBase64: imgBase64 
@@ -230,17 +249,13 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    closeAddModal();
-                    document.getElementById('inputName').value = '';
-                    document.getElementById('inputAmount').value = '';
-                    document.getElementById('inputImageFile').value = '';
-                    loadData();
+                    location.reload(); // รีเฟรชหน้าเว็บ 1 ครั้งอัตโนมัติเพื่อให้ข้อมูลตรงกันเป๊ะ
                 } else {
                     alert("เกิดข้อผิดพลาดในการบันทึก");
+                    let submitBtn = document.getElementById('submitBtn');
+                    submitBtn.textContent = "บันทึก";
+                    submitBtn.disabled = false;
                 }
-                let submitBtn = document.getElementById('submitBtn');
-                submitBtn.textContent = "บันทึก";
-                submitBtn.disabled = false;
             });
         }
 
@@ -254,7 +269,9 @@
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') { loadData(); }
+                if (data.status === 'success') { 
+                    location.reload(); // รีเฟรชหน้าเว็บ 1 ครั้งหลังลบข้อมูลเสร็จ
+                }
             });
         }
     </script>
