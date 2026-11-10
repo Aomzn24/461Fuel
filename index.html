@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Usage Dashboard - ระบบบันทึกยอดน้ำมัน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Prompt', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header & Controls -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">⛽ Dashboard บันทึกยอดน้ำมัน</h1>
+                <p class="text-xs text-gray-500">ระบบบันทึก ตรวจสอบ และจัดการข้อมูลแบบเรียลไทม์</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="sheetSelect" onchange="loadData()" class="border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-medium">
+                    <!-- รายชื่อแท็บจะถูกโหลดมาแสดงตรงนี้อัติโนมัติ -->
+                </select>
+                <button onclick="openCreateModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition shadow-sm">
+                    + เพิ่มวันใหม่
+                </button>
+                <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition shadow-sm">
+                    + บันทึกยอด
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border">
+                <p class="text-xs text-gray-500 font-medium">ยอดรวมน้ำมัน (ลิตร)</p>
+                <h3 id="totalAmountDisplay" class="text-3xl font-bold text-blue-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border">
+                <p class="text-xs text-gray-500 font-medium">จำนวนรายการวันนี้</p>
+                <h3 id="totalCountDisplay" class="text-3xl font-bold text-gray-800 mt-1">0</h3>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
+                        <th class="p-4 font-semibold">ชื่อ</th>
+                        <th class="p-4 font-semibold">จำนวน (ลิตร)</th>
+                        <th class="p-4 font-semibold">หลักฐาน (รูปภาพ)</th>
+                        <th class="p-4 font-semibold text-center">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTable" class="divide-y divide-gray-100 text-sm">
+                    <tr>
+                        <td colspan="4" class="p-6 text-center text-gray-400">กำลังโหลดข้อมูล...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: เพิ่มข้อมูลรายการน้ำมัน -->
+    <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">📝 บันทึกข้อมูลการใช้น้ำมัน</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ชื่อผู้เบิก</label>
+                    <input type="text" id="inputName" placeholder="เช่น ออม" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">จำนวน (ลิตร)</label>
+                    <input type="number" id="inputAmount" placeholder="เช่น 2" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ลิงก์รูปภาพหลักฐาน (หรือ URL รูปสลิป)</label>
+                    <input type="text" id="inputProof" placeholder="วางลิงก์รูปภาพหลักฐานที่นี่" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeAddModal()" class="px-4 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-xl">ยกเลิก</button>
+                <button onclick="submitAddData()" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 font-medium">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: สร้างวันใหม่ -->
+    <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-xs shadow-xl">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">📅 เพิ่มวันที่ใช้งานใหม่</h3>
+            <p class="text-xs text-gray-500 mb-4">ระบบจะสร้างแท็บใหม่ใน Google Sheets ให้ทันที</p>
+            <input type="text" id="newDateInput" placeholder="เช่น 15/11/69" class="w-full border rounded-xl px-3 py-2 text-sm mb-4 outline-none focus:ring-2 focus:ring-emerald-500">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeCreateModal()" class="px-3 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-xl">ยกเลิก</button>
+                <button onclick="submitNewSheet()" class="px-3 py-2 bg-emerald-600 text-white text-sm rounded-xl hover:bg-emerald-700 font-medium">สร้างแท็บ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbylvm2GVSoqFhz40aYvZXbzKf4A3ZJBNrDyrtcGOcuDX0rADy9uRU0W5yUgZ274Bzvfmg/exec";
+
+        window.onload = function() {
+            initSheets();
+        };
+
+        function initSheets() {
+            fetch(WEB_APP_URL + "?action=getSheets")
+            .then(res => res.json())
+            .then(sheets => {
+                let select = document.getElementById('sheetSelect');
+                select.innerHTML = '';
+                sheets.forEach(sheet => {
+                    let opt = document.createElement('option');
+                    opt.value = sheet;
+                    opt.textContent = sheet;
+                    select.appendChild(opt);
+                });
+                loadData();
+            });
+        }
+
+        function loadData() {
+            let currentSheet = document.getElementById('sheetSelect').value;
+            if (!currentSheet) return;
+
+            fetch(WEB_APP_URL + "?sheet=" + encodeURIComponent(currentSheet))
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('totalAmountDisplay').textContent = data.total;
+                document.getElementById('totalCountDisplay').textContent = data.items.length;
+
+                let tbody = document.getElementById('dataTable');
+                tbody.innerHTML = '';
+
+                if (data.items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400">ยังไม่มีข้อมูลในวันนี้</td></tr>`;
+                    return;
+                }
+
+                data.items.forEach(item => {
+                    let proofHtml = item.proof ? `<a href="${item.proof}" target="_blank" class="text-blue-600 underline text-xs font-medium">ดูรูปหลักฐาน</a>` : `<span class="text-gray-400 italic text-xs">ไม่มีรูปภาพ</span>`;
+                    
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                    tr.innerHTML = `
+                        <td class="p-4 text-gray-800 font-medium">${item.name}</td>
+                        <td class="p-4 text-gray-800">${item.amount}</td>
+                        <td class="p-4">${proofHtml}</td>
+                        <td class="p-4 text-center space-x-2">
+                            <button onclick="deleteRow(${item.rowId})" class="text-red-500 hover:text-red-700 text-xs font-medium">ลบ</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        // Modal Controls
+        function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
+        function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
+        function openCreateModal() { document.getElementById('createModal').classList.remove('hidden'); }
+        function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
+
+        // Actions
+        function submitNewSheet() {
+            let dateVal = document.getElementById('newDateInput').value;
+            if (!dateVal) return alert('กรุณากรอกวันที่');
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'createSheet', date: dateVal })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('สร้างแท็บสำเร็จ!');
+                    closeCreateModal();
+                    initSheets();
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+
+        function submitAddData() {
+            let currentSheet = document.getElementById('sheetSelect').value;
+            let name = document.getElementById('inputName').value;
+            let amount = document.getElementById('inputAmount').value;
+            let proof = document.getElementById('inputProof').value;
+
+            if (!name || !amount) return alert('กรุณากรอกชื่อและจำนวนให้ครบถ้วน');
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'addData', sheet: currentSheet, name: name, amount: amount, proof: proof })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeAddModal();
+                    document.getElementById('inputName').value = '';
+                    document.getElementById('inputAmount').value = '';
+                    document.getElementById('inputProof').value = '';
+                    loadData();
+                }
+            });
+        }
+
+        function deleteRow(rowId) {
+            if (!confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) return;
+            let currentSheet = document.getElementById('sheetSelect').value;
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'deleteData', sheet: currentSheet, rowId: rowId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    loadData();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
