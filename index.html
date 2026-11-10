@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuel Usage Dashboard - ระบบบันทึกยอดน้ำมัน</title>
+    <title>Fuel Usage Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>body { font-family: 'Prompt', sans-serif; }</style>
@@ -32,7 +32,7 @@
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border">
-                <p class="text-xs text-gray-500 font-medium">ยอดรวมน้ำมัน (ลิตร)</p>
+                <p class="text-xs text-gray-500 font-medium">ยอดรวมน้ำมัน (กระเป๋า)</p>
                 <h3 id="totalAmountDisplay" class="text-3xl font-bold text-blue-600 mt-1">0</h3>
             </div>
             <div class="bg-white p-5 rounded-2xl shadow-sm border">
@@ -47,7 +47,7 @@
                 <thead>
                     <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
                         <th class="p-4 font-semibold">ชื่อ</th>
-                        <th class="p-4 font-semibold">จำนวน (ลิตร)</th>
+                        <th class="p-4 font-semibold">จำนวน (กระเป๋า)</th>
                         <th class="p-4 font-semibold">หลักฐาน (รูปภาพ)</th>
                         <th class="p-4 font-semibold text-center">จัดการ</th>
                     </tr>
@@ -59,13 +59,13 @@
         </div>
     </div>
 
-    <!-- Modal: บันทึกข้อมูล (รองรับการถ่ายรูปสด) -->
+    <!-- Modal: บันทึกข้อมูล -->
     <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
             <h3 class="text-lg font-bold text-gray-800 mb-4">📝 บันทึกข้อมูลการใช้น้ำมัน</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">ชื่อผู้เบิก</label>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ชื่อ</label>
                     <input type="text" id="inputName" placeholder="เช่น ออม" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
@@ -73,8 +73,7 @@
                     <input type="number" id="inputAmount" placeholder="เช่น 2" class="w-full border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">หลักฐาน (ถ่ายรูปจากมือถือ/กล้อง หรือเลือกรูป)</label>
-                    <!-- capture="environment" จะบังคับเปิดกล้องหลังมือถือทันทีเมื่อกด -->
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ถ่ายรูปหลักฐาน (เปิดกล้องถ่ายสด)</label>
                     <input type="file" id="inputImageFile" accept="image/*" capture="environment" class="w-full border rounded-xl px-3 py-2 text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
             </div>
@@ -89,7 +88,6 @@
     <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-2xl w-full max-w-xs shadow-xl">
             <h3 class="text-lg font-bold text-gray-800 mb-2">📅 เพิ่มวันที่ใช้งานใหม่</h3>
-            <p class="text-xs text-gray-500 mb-4">ระบบจะสร้างแท็บใหม่ใน Google Sheets ให้ทันที</p>
             <input type="text" id="newDateInput" placeholder="เช่น 15/11/69" class="w-full border rounded-xl px-3 py-2 text-sm mb-4 outline-none focus:ring-2 focus:ring-emerald-500">
             <div class="flex justify-end gap-2">
                 <button onclick="closeCreateModal()" class="px-3 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-xl">ยกเลิก</button>
@@ -98,8 +96,13 @@
         </div>
     </div>
 
+    <!-- Modal: ดูรูปภาพขนาดใหญ่ -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center p-4 z-50" onclick="closeImageModal()">
+        <img id="fullImage" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl">
+    </div>
+
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypOsII4mqdUibqJyV87ly3cS0_OGSmDPQYC8LzwbER22MJKIJfpcqcmZ7p7jdwIYNKOA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxhqaWlCY7ovxq-vCwZE0kFmLHpzRiDIrfZDaGawQO7j2V2UpvzwxQVbkXRkXI_sVZk_A/exec";
 
         window.onload = function() { initSheets(); };
 
@@ -116,8 +119,6 @@
                     select.appendChild(opt);
                 });
                 loadData();
-            }).catch(err => {
-                alert("ไม่สามารถเชื่อมต่อกับ Script ได้ กรุณาตรวจสอบ URL หรือสิทธิ์การ Deploy");
             });
         }
 
@@ -140,7 +141,7 @@
                 }
 
                 data.items.forEach(item => {
-                    let proofHtml = item.proof ? `<a href="${item.proof}" target="_blank" class="text-blue-600 underline text-xs font-medium">ดูรูปหลักฐาน</a>` : `<span class="text-gray-400 italic text-xs">ไม่มีรูปภาพ</span>`;
+                    let proofHtml = item.proof ? `<img src="${item.proof}" onclick="openImageModal('${item.proof}')" class="w-12 h-12 object-cover rounded-lg cursor-pointer hover:opacity-80 border shadow-sm">` : `<span class="text-gray-400 italic text-xs">ไม่มีรูปภาพ</span>`;
                     
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
@@ -161,6 +162,14 @@
         function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); }
         function openCreateModal() { document.getElementById('createModal').classList.remove('hidden'); }
         function closeCreateModal() { document.getElementById('createModal').classList.add('hidden'); }
+        
+        function openImageModal(src) {
+            document.getElementById('fullImage').src = src;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
 
         function submitNewSheet() {
             let dateVal = document.getElementById('newDateInput').value;
@@ -199,15 +208,15 @@
                 let reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = function () {
-                    let base64Data = reader.result.split(',')[1];
-                    sendDataToServer(currentSheet, name, amount, base64Data, file.type, file.name);
+                    let imgBase64 = reader.result;
+                    sendDataToServer(currentSheet, name, amount, imgBase64);
                 };
             } else {
-                sendDataToServer(currentSheet, name, amount, "", "", "");
+                sendDataToServer(currentSheet, name, amount, "");
             }
         }
 
-        function sendDataToServer(sheet, name, amount, imgData, imgType, imgName) {
+        function sendDataToServer(sheet, name, amount, imgBase64) {
             fetch(WEB_APP_URL, {
                 method: 'POST',
                 body: JSON.stringify({ 
@@ -215,9 +224,7 @@
                     sheet: sheet, 
                     name: name, 
                     amount: amount, 
-                    imgData: imgData, 
-                    imgType: imgType, 
-                    imgName: imgName 
+                    imgBase64: imgBase64 
                 })
             })
             .then(res => res.json())
